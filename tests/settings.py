@@ -1,4 +1,5 @@
 import os
+from django.conf import settings
 
 SECRET_KEY = 'magiclink-test'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,3 +62,7 @@ LOGIN_REDIRECT_URL = 'needs_login'
 LOGOUT_REDIRECT_URL = 'no_login'
 MAGICLINK_LOGIN_SENT_REDIRECT = 'magiclink:login_sent'
 MAGICLINK_SIGNUP_LOGIN_REDIRECT = 'no_login'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+if getattr(settings, 'DEFAULT_AUTO_FIELD', 'django.db.models.BigAutoField') != DEFAULT_AUTO_FIELD:
+    DEFAULT_AUTO_FIELD = getattr(settings, 'DEFAULT_AUTO_FIELD')
