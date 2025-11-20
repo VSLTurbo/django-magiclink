@@ -39,6 +39,11 @@ class MagicLink(models.Model):
         self.times_used += 1
         if self.times_used >= settings.TOKEN_USES:
             self.disabled = True
+
+        if duration := settings.DURATION_AFTER_FIRST_USE:
+            expiry_duration = timezone.timedelta(seconds=duration)
+            self.expiry = timezone.now() + expiry_duration
+
         self.save()
 
     def disable(self) -> None:
@@ -46,13 +51,18 @@ class MagicLink(models.Model):
         self.disabled = True
         self.save()
 
-    def generate_url(self, request: HttpRequest, expiresession: bool = True) -> str:
+    def generate_url(
+        self,
+        request: HttpRequest,
+        expiresession: bool = True,
+    ) -> str:
         url_path = reverse(settings.LOGIN_VERIFY_URL)
 
         params = {'token': self.token}
-        params['expiresession'] = '1' # Expire the session when closing the browser
+        # Expire the session when closing the browser
+        params['expiresession'] = '1'
         if not expiresession:
-            params['expiresession'] = '0' # Don't expire the session
+            params['expiresession'] = '0'  # Don't expire the session
         if settings.VERIFY_INCLUDE_EMAIL:
             params['email'] = self.email
         query = urlencode(params)
@@ -64,9 +74,13 @@ class MagicLink(models.Model):
         return url
 
     def send(
-        self, request: HttpRequest, subject=None, base_html=None, base_plain=None,
+        self,
+        request: HttpRequest,
+        subject=None,
+        base_html=None,
+        base_plain=None,
         expiresession: bool = True
-        ) -> None:
+    ) -> None:
         user = User.objects.get(email=self.email)
 
         if not settings.IGNORE_UNSUBSCRIBE_IF_USER:
@@ -89,8 +103,10 @@ class MagicLink(models.Model):
             'token_uses': settings.TOKEN_USES,
             'style': settings.EMAIL_STYLES,
         }
-        plain = render_to_string(base_plain or settings.EMAIL_TEMPLATE_NAME_TEXT, context)
-        html = render_to_string(base_html or settings.EMAIL_TEMPLATE_NAME_HTML, context)
+        plain = render_to_string(
+            base_plain or settings.EMAIL_TEMPLATE_NAME_TEXT, context)
+        html = render_to_string(
+            base_html or settings.EMAIL_TEMPLATE_NAME_HTML, context)
         send_mail(
             subject=subject or settings.EMAIL_SUBJECT,
             message=plain,

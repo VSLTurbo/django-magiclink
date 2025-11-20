@@ -24,7 +24,7 @@ def test_model_string(magic_link):  # NOQA: F811
 
 
 @pytest.mark.django_db
-def test_generate_url_with_expiresession_default(settings, magic_link):  # NOQA: F811
+def test_generate_url_with_expiresession_default(settings, magic_link):  # NOQA: F811, E501
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
     from magiclink import settings
     reload(settings)
@@ -35,12 +35,12 @@ def test_generate_url_with_expiresession_default(settings, magic_link):  # NOQA:
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'  # NOQA: E501
     assert ml.generate_url(request) == url
 
 
 @pytest.mark.django_db
-def test_generate_url_custom_verify_with_expiresession_true(settings, magic_link):  # NOQA: F811
+def test_generate_url_custom_verify_with_expiresession_true(settings, magic_link):  # NOQA: F811, E501
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
     from magiclink import settings
     reload(settings)
@@ -51,7 +51,7 @@ def test_generate_url_custom_verify_with_expiresession_true(settings, magic_link
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'  # NOQA: E501
     assert ml.generate_url(request, expiresession=True) == url
 
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
@@ -60,7 +60,7 @@ def test_generate_url_custom_verify_with_expiresession_true(settings, magic_link
 
 
 @pytest.mark.django_db
-def test_generate_url_custom_verify_with_expiresession_false(settings, magic_link):  # NOQA: F811
+def test_generate_url_custom_verify_with_expiresession_false(settings, magic_link):  # NOQA: F811, E501
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
     from magiclink import settings
     reload(settings)
@@ -71,7 +71,7 @@ def test_generate_url_custom_verify_with_expiresession_false(settings, magic_lin
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    url = f'http://{host}{login_url}?token={ml.token}&expiresession=0&email={quote(ml.email)}'
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=0&email={quote(ml.email)}'  # NOQA: E501
     assert ml.generate_url(request, expiresession=False) == url
 
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
@@ -251,6 +251,45 @@ def test_validate_used_times(user, magic_link):  # NOQA: F811
 
     ml = MagicLink.objects.get(token=ml.token)
     assert ml.times_used == settings.TOKEN_USES + 1
+    assert ml.disabled is True
+
+
+@pytest.mark.django_db
+def test_validate_used_times_with_duration_after_first_use_failure(settings, user, magic_link):  # NOQA: F811, E501
+    settings.MAGICLINK_DURATION_AFTER_FIRST_USE = 5  # seconds
+    settings.MAGICLINK_TOKEN_USES = 2
+    from magiclink import settings
+    reload(settings)
+
+    request = HttpRequest()
+    ml = magic_link(request)
+
+    assert ml.expiry > timezone.now() + timedelta(seconds=20)
+
+    request.COOKIES[f'magiclink{ml.pk}'] = ml.cookie_value
+    ml.times_used = 0
+    ml.save()
+
+    # First use
+    ml_user = ml.validate(request=request, email=user.email)
+    assert ml_user == user
+    ml.used()  # actual increment of times_used
+
+    ml = MagicLink.objects.get(token=ml.token)
+    assert ml.times_used == 1
+    assert ml.disabled is False
+
+    expected_expiry_threshold = timezone.now(
+    ) + timedelta(seconds=settings.DURATION_AFTER_FIRST_USE + 1)
+    assert ml.expiry < expected_expiry_threshold
+
+    # Second use within duration
+    ml_user = ml.validate(request=request, email=user.email)
+    assert ml_user == user
+    ml.used()  # actual increment of times_used
+
+    ml = MagicLink.objects.get(token=ml.token)
+    assert ml.times_used == 2
     assert ml.disabled is True
 
 

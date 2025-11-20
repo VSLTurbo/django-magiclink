@@ -13,7 +13,7 @@ homepage = "https://github.com/pyepye/django-magiclink"
 keywords = ["magic link", "authentication", "passwordless"]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.11"
 Django = ">=2.1"
 packaging = ">=20.9,<24.0"
 
@@ -38,3 +38,8 @@ skip_glob = "__pycache__/*,venv/*,.venv/*,.tox/*,.mypy_cache"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.1,<10.0.0)"
+]

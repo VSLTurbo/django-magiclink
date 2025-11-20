@@ -46,6 +46,14 @@ try:
 except ValueError:
     raise ImproperlyConfigured('"MAGICLINK_TOKEN_USES" must be an integer')
 
+try:
+    DURATION_AFTER_FIRST_USE = int(getattr(settings, 'MAGICLINK_DURATION_AFTER_FIRST_USE', 0))
+except (ValueError, TypeError):
+    raise ImproperlyConfigured(
+        '"MAGICLINK_DURATION_AFTER_FIRST_USE" must be an integer.'
+        'It represents seconds that the token remains valid after first use.'
+    )
+
 EMAIL_IGNORE_CASE = getattr(settings, 'MAGICLINK_EMAIL_IGNORE_CASE', True)
 if not isinstance(EMAIL_IGNORE_CASE, bool):
     raise ImproperlyConfigured('"MAGICLINK_EMAIL_IGNORE_CASE" must be a boolean')

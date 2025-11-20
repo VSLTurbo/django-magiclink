@@ -127,6 +127,29 @@ def test_token_uses_bad_value(settings):
         reload(settings)
 
 
+def test_duration_after_first_use(settings):
+    settings.MAGICLINK_DURATION_AFTER_FIRST_USE = 100
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+    assert mlsettings.DURATION_AFTER_FIRST_USE == settings.MAGICLINK_DURATION_AFTER_FIRST_USE  # NOQA: E501
+
+
+def test_duration_after_first_use_bad_value(settings):
+    settings.MAGICLINK_DURATION_AFTER_FIRST_USE = 'Test'
+
+    with pytest.raises(ImproperlyConfigured):
+        from magiclink import settings
+        reload(settings)
+
+
+def test_duration_after_first_use_empty_value(settings):
+    settings.MAGICLINK_DURATION_AFTER_FIRST_USE = None
+
+    with pytest.raises(ImproperlyConfigured):
+        from magiclink import settings
+        reload(settings)
+
+
 def test_email_ignore_case(settings):
     settings.MAGICLINK_EMAIL_IGNORE_CASE = True
     from magiclink import settings as mlsettings
