@@ -156,7 +156,8 @@ def test_login_too_many_tokens(client, user, magic_link):  # NOQA: F811
     data = {'email': ml.email}
     response = client.post(url, data)
     assert response.status_code == 200
-    error = ['Too many magic login requests']
+    error = ['Muitas requisições de login para esse email.'
+             ' Aguarde e tente novamente.']
     assert response.context_data['login_form'].errors['email'] == error
 
 

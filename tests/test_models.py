@@ -24,7 +24,7 @@ def test_model_string(magic_link):  # NOQA: F811
 
 
 @pytest.mark.django_db
-def test_generate_url(settings, magic_link):  # NOQA: F811
+def test_generate_url_with_expiresession_default(settings, magic_link):  # NOQA: F811
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
     from magiclink import settings
     reload(settings)
@@ -35,12 +35,12 @@ def test_generate_url(settings, magic_link):  # NOQA: F811
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    url = f'http://{host}{login_url}?token={ml.token}&email={quote(ml.email)}'
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'
     assert ml.generate_url(request) == url
 
 
 @pytest.mark.django_db
-def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
+def test_generate_url_custom_verify_with_expiresession_true(settings, magic_link):  # NOQA: F811
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
     from magiclink import settings
     reload(settings)
@@ -51,8 +51,28 @@ def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    url = f'http://{host}{login_url}?token={ml.token}&email={quote(ml.email)}'
-    assert ml.generate_url(request) == url
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=1&email={quote(ml.email)}'
+    assert ml.generate_url(request, expiresession=True) == url
+
+    settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
+    from magiclink import settings
+    reload(settings)
+
+
+@pytest.mark.django_db
+def test_generate_url_custom_verify_with_expiresession_false(settings, magic_link):  # NOQA: F811
+    settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
+    from magiclink import settings
+    reload(settings)
+
+    request = HttpRequest()
+    host = '127.0.0.1'
+    login_url = reverse('custom_login_verify')
+    request.META['SERVER_NAME'] = host
+    request.META['SERVER_PORT'] = 80
+    ml = magic_link(request)
+    url = f'http://{host}{login_url}?token={ml.token}&expiresession=0&email={quote(ml.email)}'
+    assert ml.generate_url(request, expiresession=False) == url
 
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
     from magiclink import settings
