@@ -150,3 +150,80 @@ def test_login_verify_custom_verify(client, settings, magic_link):  # NOQA: F811
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'magiclink:login_verify'
     from magiclink import settings
     reload(settings)
+
+
+@pytest.mark.django_db
+def test_login_verify_expiresession_zero(client, settings, magic_link):  # NOQA: F811,E501
+    """Test that expiresession=0 sets session to expire based on
+    SESSION_COOKIE_AGE"""
+    url = reverse('magiclink:login_verify')
+    request = HttpRequest()
+    ml = magic_link(request)
+    ml.ip_address = '127.0.0.0'
+    ml.save()
+
+    params = {'token': ml.token, 'email': ml.email, 'expiresession': '0'}
+    query = urlencode(params)
+    url = f'{url}?{query}'
+
+    cookie_name = f'magiclink{ml.pk}'
+    client.cookies = SimpleCookie({cookie_name: ml.cookie_value})
+    response = client.get(url)
+
+    assert response.status_code == 302
+    assert response.url == reverse(settings.LOGIN_REDIRECT_URL)
+
+    # Verify session expiry is set to SESSION_COOKIE_AGE (not 0)
+    # When set_expiry is called with a non-zero value, the session
+    # should persist
+    assert client.session.get_expiry_age() > 0
+
+
+@pytest.mark.django_db
+def test_login_verify_expiresession_default(client, settings, magic_link):  # NOQA: F811,E501
+    """Test that without expiresession param, session expires when browser
+    closes"""
+    url = reverse('magiclink:login_verify')
+    request = HttpRequest()
+    ml = magic_link(request)
+    ml.ip_address = '127.0.0.0'
+    ml.save()
+
+    params = {'token': ml.token, 'email': ml.email}
+    query = urlencode(params)
+    url = f'{url}?{query}'
+
+    cookie_name = f'magiclink{ml.pk}'
+    client.cookies = SimpleCookie({cookie_name: ml.cookie_value})
+    response = client.get(url)
+
+    assert response.status_code == 302
+    assert response.url == reverse(settings.LOGIN_REDIRECT_URL)
+
+    # Verify session expires when browser closes (set_expiry(0))
+    assert client.session.get_expire_at_browser_close() is True
+
+
+@pytest.mark.django_db
+def test_login_verify_expiresession_non_zero(client, settings, magic_link):  # NOQA: F811,E501
+    """Test that expiresession with any non-zero value expires session at
+    browser close"""
+    url = reverse('magiclink:login_verify')
+    request = HttpRequest()
+    ml = magic_link(request)
+    ml.ip_address = '127.0.0.0'
+    ml.save()
+
+    params = {'token': ml.token, 'email': ml.email, 'expiresession': '1'}
+    query = urlencode(params)
+    url = f'{url}?{query}'
+
+    cookie_name = f'magiclink{ml.pk}'
+    client.cookies = SimpleCookie({cookie_name: ml.cookie_value})
+    response = client.get(url)
+
+    assert response.status_code == 302
+    assert response.url == reverse(settings.LOGIN_REDIRECT_URL)
+
+    # Verify session expires when browser closes
+    assert client.session.get_expire_at_browser_close() is True
