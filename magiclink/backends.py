@@ -5,6 +5,7 @@ from django.http import HttpRequest
 
 from . import settings
 from .models import MagicLink, MagicLinkError
+from .utils import mask_email
 
 User = get_user_model()
 log = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class MagicLinkBackend():
         token: str = '',
         email: str = '',
     ):
-        log.debug(f'MagicLink authenticate token: {token} - email: {email}')
+        log.debug(f'MagicLink authenticate token for email: {mask_email(email)}')
 
         if not token:
             log.warning('Token missing from authentication')
@@ -45,7 +46,7 @@ class MagicLinkBackend():
             return
 
         magiclink.used()
-        log.info(f'{user} authenticated via MagicLink')
+        log.info(f'{user.id} authenticated via MagicLink')
         return user
 
     def get_user(self, user_id):

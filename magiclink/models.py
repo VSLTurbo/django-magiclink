@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import settings
-from .utils import get_client_ip
+from .utils import get_client_ip, mask_email
 
 User = get_user_model()
 
@@ -87,7 +87,7 @@ class MagicLink(models.Model):
             try:
                 MagicLinkUnsubscribe.objects.get(email=self.email)
                 raise MagicLinkError(
-                    'Email address is on the unsubscribe list')
+                    f'Email {mask_email(self.email)} address is on the unsubscribe list')
             except MagicLinkUnsubscribe.DoesNotExist:
                 pass
 

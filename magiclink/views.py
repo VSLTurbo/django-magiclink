@@ -22,7 +22,7 @@ from .forms import (
 )
 from .helpers import create_magiclink, get_or_create_user
 from .models import MagicLink, MagicLinkError
-from .utils import get_url_path
+from .utils import get_url_path, mask_email
 
 User = get_user_model()
 log = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class Login(TemplateView):
         if settings.REQUIRE_SAME_BROWSER:
             cookie_name = f'magiclink{magiclink.pk}'
             response.set_cookie(cookie_name, magiclink.cookie_value)
-            log.info(f'Cookie {cookie_name} set for {email}')
+            log.info(f'Cookie {cookie_name} set for {mask_email(email)}')
         return response
 
     def login_redirect_url(self, next_url) -> str:
@@ -130,7 +130,7 @@ class LoginVerify(TemplateView):
             return self.render_to_response(context)
 
         login(request, user)
-        log.info(f'Login successful for {email}')
+        log.info(f'Login successful for {mask_email(email)}')
 
         if expire_session == '0':
             # Don't expire the session
@@ -207,7 +207,7 @@ class Signup(TemplateView):
         if settings.REQUIRE_SAME_BROWSER:
             cookie_name = f'magiclink{magiclink.pk}'
             response.set_cookie(cookie_name, magiclink.cookie_value)
-            log.info(f'Cookie {cookie_name} set for {email}')
+            log.info(f'Cookie {cookie_name} set for {mask_email(email)}')
         return response
 
 
