@@ -22,7 +22,9 @@ def get_url_path(url: str) -> str:
     except NoReverseMatch:
         return url
 
-def mask_email(email: str) -> str:
+def mask_email(email: str) -> str | None:
+    if not email:
+        return None
     if email.find('@') == -1:
         return email[:3] + '*' * (len(email) - 3)
     email_parts = email.split('@')

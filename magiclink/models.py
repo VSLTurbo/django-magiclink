@@ -87,7 +87,7 @@ class MagicLink(models.Model):
             try:
                 MagicLinkUnsubscribe.objects.get(email=self.email)
                 raise MagicLinkError(
-                    f'Email {mask_email(self.email)} address is on the unsubscribe list')
+                    f'Email address is on the unsubscribe list')
             except MagicLinkUnsubscribe.DoesNotExist:
                 pass
 
