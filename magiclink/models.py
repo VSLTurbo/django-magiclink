@@ -130,7 +130,7 @@ class MagicLink(models.Model):
             self.disable()
             raise MagicLinkError('Magic link has expired')
 
-        if settings.REQUIRE_SAME_IP:
+        if settings.REQUIRE_SAME_IP and self.ip_address:
             client_ip = get_client_ip(request)
             if client_ip and settings.ANONYMIZE_IP:
                 client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
