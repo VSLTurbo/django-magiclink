@@ -94,6 +94,7 @@ def test_login_verify_failed_validation(client, settings, magic_link):  # NOQA: 
 
     url = reverse('magiclink:login_verify')
     request = HttpRequest()
+    request.META['HTTP_X_FORWARDED_FOR'] = '207.14.138.207'
     ml = magic_link(request)
     params = {'token': ml.token}
     params['email'] = ml.email
