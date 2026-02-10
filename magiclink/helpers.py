@@ -15,7 +15,7 @@ from .utils import get_client_ip, get_url_path
 
 def create_magiclink(
     email: str,
-    request: HttpRequest,
+    request: HttpRequest | None = None,
     redirect_url: str = '',
 ) -> MagicLink:
     if settings.EMAIL_IGNORE_CASE:
@@ -34,7 +34,7 @@ def create_magiclink(
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
 
     client_ip = None
-    if settings.REQUIRE_SAME_IP:
+    if settings.REQUIRE_SAME_IP and request:
         client_ip = get_client_ip(request)
         if client_ip and settings.ANONYMIZE_IP:
             client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
