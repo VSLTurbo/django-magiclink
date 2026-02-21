@@ -29,3 +29,10 @@ def test_get_url_path_with_path():
     url_name = '/test/'
     url = get_url_path(url_name)
     assert url == '/test/'
+
+
+def test_mask_email():
+    from magiclink.utils import mask_email
+    assert mask_email('') is None
+    assert mask_email('test') == 'tes*'
+    assert mask_email('test@example.com') == 'tes*@example.com'

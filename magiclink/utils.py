@@ -22,6 +22,7 @@ def get_url_path(url: str) -> str:
     except NoReverseMatch:
         return url
 
+
 def mask_email(email: str) -> str | None:
     if not email:
         return None

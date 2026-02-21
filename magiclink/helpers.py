@@ -17,6 +17,7 @@ def create_magiclink(
     email: str,
     request: HttpRequest | None = None,
     redirect_url: str = '',
+    expiry: timezone.datetime | None = None
 ) -> MagicLink:
     if settings.EMAIL_IGNORE_CASE:
         email = email.lower()
@@ -39,7 +40,8 @@ def create_magiclink(
         if client_ip and settings.ANONYMIZE_IP:
             client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
 
-    expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
+    if expiry is None:
+        expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
     magic_link = MagicLink.objects.create(
         email=email,
         token=get_random_string(length=settings.TOKEN_LENGTH),

@@ -106,6 +106,24 @@ def test_create_magiclink_one_token_per_user(freezer):
 
 
 @pytest.mark.django_db
+def test_create_magiclink_no_request():
+    email = 'test@example.com'
+    magic_link = create_magiclink(email, None)
+    assert magic_link.email == email
+    assert magic_link.ip_address is None
+
+
+@pytest.mark.django_db
+def test_create_magiclink_with_expiry():
+    email = 'test@example.com'
+    request = HttpRequest()
+    expiry = timezone.now() + timedelta(days=1)
+    magic_link = create_magiclink(email, request, expiry=expiry)
+    assert magic_link.email == email
+    assert magic_link.expiry == expiry
+
+
+@pytest.mark.django_db
 def test_create_magiclink_login_request_time_limit():
     email = 'test@example.com'
     request = HttpRequest()
