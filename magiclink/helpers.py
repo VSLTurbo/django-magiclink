@@ -47,7 +47,7 @@ def create_magiclink(
     if login_request_time_limit > 0:
         limit = timezone.now() - timedelta(seconds=login_request_time_limit)  # NOQA: E501
         over_limit = MagicLink.objects.filter(email=email, created__gte=limit)
-        if over_limit:
+        if over_limit.exists():
             raise MagicLinkError('Muitas requisições de login para esse email. Aguarde e tente novamente.')
 
     if one_token_per_user:
