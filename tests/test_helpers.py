@@ -232,3 +232,31 @@ def test_create_magiclink_email_ignore_case_param_false(settings):
     email = 'TEST@example.com'
     magic_link = create_magiclink(email, email_ignore_case=False)
     assert magic_link.email == email
+
+@pytest.mark.django_db
+def test_create_magiclink_email_ignore_case_param_uses_settings(settings):
+    settings.MAGICLINK_EMAIL_IGNORE_CASE = False
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    email = 'TEST@example.com'
+    magic_link = create_magiclink(email)
+    assert magic_link.email == email
+
+@pytest.mark.django_db
+def test_create_magiclink_one_token_per_user_param_false(freezer, settings):
+    settings.MAGICLINK_ONE_TOKEN_PER_USER = True
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    email = 'test@example.com'
+    request = HttpRequest()
+
+    freezer.move_to('2000-01-01T00:00:00')
+    first = create_magiclink(email, request, one_token_per_user=False)
+
+    freezer.move_to('2000-01-01T00:00:31')
+    create_magiclink(email, request, one_token_per_user=False)
+
+    first.refresh_from_db()
+    assert first.disabled is False
