@@ -355,3 +355,32 @@ def test_create_magiclink_require_same_ip_uses_settings(settings):
 
     magic_link = create_magiclink('test@example.com', request)
     assert magic_link.ip_address is None
+
+@pytest.mark.django_db
+def test_create_magiclink_anonymize_ip_param_false(settings):
+    settings.MAGICLINK_ANONYMIZE_IP = True
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    request = HttpRequest()
+    request.META['REMOTE_ADDR'] = '127.0.0.1'
+
+    magic_link = create_magiclink(
+        'test@example.com',
+        request,
+        anonymize_ip=False,
+    )
+    assert magic_link.ip_address == '127.0.0.1'
+
+
+@pytest.mark.django_db
+def test_create_magiclink_anonymize_ip_uses_settings(settings):
+    settings.MAGICLINK_ANONYMIZE_IP = False
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    request = HttpRequest()
+    request.META['REMOTE_ADDR'] = '127.0.0.1'
+
+    magic_link = create_magiclink('test@example.com', request)
+    assert magic_link.ip_address == '127.0.0.1'
