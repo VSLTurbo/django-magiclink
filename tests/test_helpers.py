@@ -260,3 +260,21 @@ def test_create_magiclink_one_token_per_user_param_false(freezer, settings):
 
     first.refresh_from_db()
     assert first.disabled is False
+
+@pytest.mark.django_db
+def test_create_magiclink_token_length_param(settings):
+    settings.MAGICLINK_TOKEN_LENGTH = 50
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    magic_link = create_magiclink('test@example.com', token_length=10)
+    assert len(magic_link.token) == 10
+
+@pytest.mark.django_db
+def test_create_magiclink_token_length_uses_settings(settings):
+    settings.MAGICLINK_TOKEN_LENGTH = 25
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    magic_link = create_magiclink('test@example.com')
+    assert len(magic_link.token) == 25
