@@ -17,17 +17,40 @@ def create_magiclink(
     email: str,
     request: HttpRequest | None = None,
     redirect_url: str = '',
-    expiry: timezone.datetime | None = None
+    expiry: timezone.datetime | None = None,
+    email_ignore_case: bool | None = None,
+    login_request_time_limit: int | None = None,
+    one_token_per_user: bool | None = None,
+    require_same_ip: bool | None = None,
+    anonymize_ip: bool | None = None,
+    auth_timeout: int | None = None,
+    token_length: int | None = None,
 ) -> MagicLink:
-    if settings.EMAIL_IGNORE_CASE:
+    if email_ignore_case is None:
+        email_ignore_case = settings.EMAIL_IGNORE_CASE
+    if login_request_time_limit is None:
+        login_request_time_limit = settings.LOGIN_REQUEST_TIME_LIMIT
+    if one_token_per_user is None:
+        one_token_per_user = settings.ONE_TOKEN_PER_USER
+    if require_same_ip is None:
+        require_same_ip = settings.REQUIRE_SAME_IP
+    if anonymize_ip is None:
+        anonymize_ip = settings.ANONYMIZE_IP
+    if auth_timeout is None:
+        auth_timeout = settings.AUTH_TIMEOUT
+    if token_length is None:
+        token_length = settings.TOKEN_LENGTH
+
+    if email_ignore_case:
         email = email.lower()
 
-    limit = timezone.now() - timedelta(seconds=settings.LOGIN_REQUEST_TIME_LIMIT)  # NOQA: E501
-    over_limit = MagicLink.objects.filter(email=email, created__gte=limit)
-    if over_limit:
-        raise MagicLinkError('Muitas requisições de login para esse email. Aguarde e tente novamente.')
+    if login_request_time_limit > 0:
+        limit = timezone.now() - timedelta(seconds=login_request_time_limit)  # NOQA: E501
+        over_limit = MagicLink.objects.filter(email=email, created__gte=limit)
+        if over_limit:
+            raise MagicLinkError('Muitas requisições de login para esse email. Aguarde e tente novamente.')
 
-    if settings.ONE_TOKEN_PER_USER:
+    if one_token_per_user:
         magic_links = MagicLink.objects.filter(email=email, disabled=False)
         magic_links.update(disabled=True)
 
@@ -35,16 +58,17 @@ def create_magiclink(
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
 
     client_ip = None
-    if settings.REQUIRE_SAME_IP and request is not None:
+     if require_same_ip and request is not None:
         client_ip = get_client_ip(request)
-        if client_ip and settings.ANONYMIZE_IP:
+        if client_ip and anonymize_ip:
             client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
 
     if expiry is None:
-        expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
+        expiry = timezone.now() + timedelta(seconds=auth_timeout)
+
     magic_link = MagicLink.objects.create(
         email=email,
-        token=get_random_string(length=settings.TOKEN_LENGTH),
+        token=get_random_string(length=token_length),
         expiry=expiry,
         redirect_url=redirect_url,
         cookie_value=str(uuid4()),
