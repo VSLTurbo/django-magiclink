@@ -326,3 +326,32 @@ def test_create_magiclink_login_request_time_limit_uses_settings(settings):
     create_magiclink(email, request)
 
     assert MagicLink.objects.filter(email=email).count() == 2
+
+@pytest.mark.django_db
+def test_create_magiclink_require_same_ip_param_false(settings):
+    settings.MAGICLINK_REQUIRE_SAME_IP = True
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    request = HttpRequest()
+    request.META['REMOTE_ADDR'] = '127.0.0.1'
+
+    magic_link = create_magiclink(
+        'test@example.com',
+        request,
+        require_same_ip=False,
+    )
+    assert magic_link.ip_address is None
+
+
+@pytest.mark.django_db
+def test_create_magiclink_require_same_ip_uses_settings(settings):
+    settings.MAGICLINK_REQUIRE_SAME_IP = False
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    request = HttpRequest()
+    request.META['REMOTE_ADDR'] = '127.0.0.1'
+
+    magic_link = create_magiclink('test@example.com', request)
+    assert magic_link.ip_address is None
