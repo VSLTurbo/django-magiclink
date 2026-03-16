@@ -222,3 +222,13 @@ def test_get_or_create_user_name(mocker):
     usr = get_or_create_user(email=email, first_name=first, last_name=last)
     assert usr.email == email
     assert usr.name == f'{first} {last}'
+
+@pytest.mark.django_db
+def test_create_magiclink_email_ignore_case_param_false(settings):
+    settings.MAGICLINK_EMAIL_IGNORE_CASE = True
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    email = 'TEST@example.com'
+    magic_link = create_magiclink(email, email_ignore_case=False)
+    assert magic_link.email == email
