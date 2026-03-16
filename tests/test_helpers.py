@@ -278,3 +278,27 @@ def test_create_magiclink_token_length_uses_settings(settings):
 
     magic_link = create_magiclink('test@example.com')
     assert len(magic_link.token) == 25
+
+@pytest.mark.django_db
+def test_create_magiclink_auth_timeout_param(freezer, settings):
+    settings.MAGICLINK_AUTH_TIMEOUT = 300
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    freezer.move_to('2000-01-01T00:00:00')
+    expected_expiry = timezone.now() + timedelta(seconds=600)
+
+    magic_link = create_magiclink('test@example.com', auth_timeout=600)
+    assert magic_link.expiry == expected_expiry
+
+@pytest.mark.django_db
+def test_create_magiclink_auth_timeout_uses_settings(settings, freezer):
+    settings.MAGICLINK_AUTH_TIMEOUT = 900
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    freezer.move_to('2000-01-01T00:00:00')
+    expected_expiry = timezone.now() + timedelta(seconds=900)
+
+    magic_link = create_magiclink('test@example.com')
+    assert magic_link.expiry == expected_expiry
