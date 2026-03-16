@@ -302,3 +302,27 @@ def test_create_magiclink_auth_timeout_uses_settings(settings, freezer):
 
     magic_link = create_magiclink('test@example.com')
     assert magic_link.expiry == expected_expiry
+
+@pytest.mark.django_db
+def test_create_magiclink_login_request_time_limit_param_zero():
+    email = 'test@example.com'
+    request = HttpRequest()
+
+    create_magiclink(email, request, login_request_time_limit=0)
+    create_magiclink(email, request, login_request_time_limit=0)
+
+    assert MagicLink.objects.filter(email=email).count() == 2
+
+@pytest.mark.django_db
+def test_create_magiclink_login_request_time_limit_uses_settings(settings):
+    settings.MAGICLINK_LOGIN_REQUEST_TIME_LIMIT = 0
+    from magiclink import settings as mlsettings
+    reload(mlsettings)
+
+    email = 'test@example.com'
+    request = HttpRequest()
+
+    create_magiclink(email, request)
+    create_magiclink(email, request)
+
+    assert MagicLink.objects.filter(email=email).count() == 2
