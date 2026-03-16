@@ -58,7 +58,8 @@ def create_magiclink(
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
 
     client_ip = None
-     if require_same_ip and request is not None:
+
+    if require_same_ip and request is not None:
         client_ip = get_client_ip(request)
         if client_ip and anonymize_ip:
             client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
